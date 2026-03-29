@@ -1,6 +1,6 @@
 # AyakaGeminiAccountSwitcher
 
-> A Gemini CLI extension by [AyakaMods](https://github.com/AyakaMods) that adds multi-account switching support directly inside Gemini CLI.
+> A Gemini CLI extension by [AyakaMods](https://github.com/AyakaMods) that adds multi-account switching support directly inside Gemini CLI — with an auto-watcher that detects quota exhaustion and switches accounts automatically.
 
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square)
 ![Version](https://img.shields.io/badge/Version-1.0.0-green?style=flat-square)
@@ -11,18 +11,29 @@
 
 ## Why?
 
-Gemini CLI only allows one Google account at a time, with a free quota of **1,000 requests/day**. For heavy workloads (like large codebase migrations), you hit that limit fast. This extension lets you save multiple Google accounts and switch between them instantly — all from inside Gemini CLI without ever leaving the terminal.
+Gemini CLI only allows one Google account at a time, with a free quota of **1,000 requests/day**. For heavy workloads (like large codebase migrations), you hit that limit fast. This extension lets you:
+
+- Save multiple Google accounts
+- Switch between them instantly using slash commands inside Gemini CLI
+- Run a **background watcher** that auto-detects quota exhaustion and notifies you before switching to the best available account
 
 ---
 
 ## Features
 
+### Gemini CLI Extension (slash commands)
 - `/accounts:list` — List all saved accounts with emails and save location
-- `/accounts:save <name>` — Save your current login session under a name
-- `/accounts:switch <name>` — Switch to a saved account
-- `/accounts:delete <name>` — Delete a saved account
-- Shows save path both in the main list and after every save action
-- Auto-backs up your previous session before every switch
+- `/accounts:save <n>` — Save your current login session
+- `/accounts:switch <n>` — Switch to a saved account
+- `/accounts:delete <n>` — Delete a saved account
+
+### Background Watcher
+- Monitors Gemini CLI logs in real-time for quota exhaustion
+- Tracks daily request count per account
+- Picks the account with the **most quota remaining**
+- Shows a **Windows notification** + console prompt before switching
+- Waits for your confirmation before swapping accounts
+- Auto-backs up previous session before every switch
 
 ---
 
@@ -61,19 +72,76 @@ gemini
 
 ## Usage
 
-### Save your current logged-in account
+### Step 1 — Save your accounts first
+
+Inside Gemini CLI, save each Google account you want to rotate:
 ```
 /accounts:save gmail1
+/accounts:save gmail2
+/accounts:save gmail3
 ```
-Output:
+
+### Step 2 — Start the background watcher
+
+Open a **separate terminal window** and run:
+
+**Windows (batch):**
+```cmd
+start-watcher.bat
 ```
-✅ Saved account 'gmail1' (yourname@gmail.com)
-📁 Saved at: C:\Users\YourName\.gemini-accounts\gmail1
+
+**Windows (PowerShell):**
+```powershell
+.\start-watcher.ps1
 ```
+
+**Any OS:**
+```bash
+npm run watcher
+```
+
+Keep this window open while using Gemini CLI.
 
 ---
 
-### List all saved accounts
+### Watcher output example
+
+```
+╔══════════════════════════════════════════════════╗
+║     AyakaGeminiAccountSwitcher — Watcher         ║
+║     by AyakaMods                                 ║
+╚══════════════════════════════════════════════════╝
+
+[10:32:01] 👤 Current account: gmail1
+[10:32:01] 📋 Saved accounts: gmail1, gmail2, gmail3
+
+[10:32:01] 📊 Today's usage:
+   gmail1: 847 requests — OK
+   gmail2: 120 requests — OK
+   gmail3: 0 requests   — OK
+
+[10:32:01] 👁️  Watching Gemini CLI logs for quota errors...
+```
+
+When quota exhausts:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ⚠️  QUOTA EXHAUSTED
+  Current  : gmail1@example.com (resets in 7h33m)
+  Switch to: gmail3 (other@example.com)
+  Used today: 0 requests
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Switch now? (y/n):
+```
+
+Type `y` → credentials swap → restart Gemini CLI → continue working.
+
+---
+
+### Extension slash commands
+
+#### List all saved accounts
 ```
 /accounts:list
 ```
@@ -81,59 +149,60 @@ Output:
 ```
 📁 Accounts saved at: C:\Users\YourName\.gemini-accounts
 
-🔵 Current active account: yourname@gmail.com
+🔵 Current active account: gmail1@example.com
 
-📋 Saved accounts (2):
-  [1] gmail1 — yourname@gmail.com
+📋 Saved accounts (3):
+  [1] gmail1 — gmail1@example.com
        📁 C:\Users\YourName\.gemini-accounts\gmail1
-  [2] gmail2 — otherwork@gmail.com
+  [2] gmail2 — gmail2@example.com
        📁 C:\Users\YourName\.gemini-accounts\gmail2
+  [3] gmail3 — gmail3@example.com
+       📁 C:\Users\YourName\.gemini-accounts\gmail3
 ```
 
----
-
-### Switch to another account
+#### Manual switch
 ```
 /accounts:switch gmail2
 ```
-Output:
-```
-✅ Switched to account 'gmail2' (otherwork@gmail.com)
 
-⚠️ IMPORTANT: You must restart Gemini CLI for the account switch to take effect.
-Close this session and run "gemini" again.
-```
-
----
-
-### Delete a saved account
+#### Delete an account
 ```
 /accounts:delete gmail1
-```
-Output:
-```
-🗑️ Deleted account 'gmail1' (yourname@gmail.com)
 ```
 
 ---
 
 ## How It Works
 
-Gemini CLI stores OAuth credentials in two files inside `~/.gemini/`:
-
+### Account Storage
+Gemini CLI stores OAuth credentials in `~/.gemini/`:
 - `oauth_creds.json` — active login token
 - `google_accounts.json` — account info
 
-This extension copies those files to `~/.gemini-accounts/<name>/` when saving, and swaps them back when switching. Your previous session is always backed up automatically to `_previous_session` before any switch occurs.
+This extension copies those files to `~/.gemini-accounts/<n>/` when saving, and swaps them back when switching.
+
+### Quota Detection
+The watcher reads Gemini CLI log files from `~/.gemini/tmp/*/logs.json` every 5 seconds and scans for quota exhaustion messages. When detected, it marks that account as exhausted with a reset timer, then picks the account with the fewest requests used today as the best candidate.
+
+### Account Selection Logic
+```
+Available accounts (not exhausted today)
+       ↓
+Sort by requests used today (ascending)
+       ↓
+Pick the one with fewest requests = most quota remaining
+```
 
 ---
 
-## Accounts Storage Location
+## File & Folder Locations
 
-| OS | Path |
+| Item | Location |
 |---|---|
-| Windows | `C:\Users\<YourName>\.gemini-accounts\` |
-| macOS / Linux | `~/.gemini-accounts/` |
+| Saved accounts | `~/.gemini-accounts/` |
+| Usage tracker | `~/.gemini-accounts/_usage_tracker.json` |
+| Previous session backup | `~/.gemini-accounts/_previous_session/` |
+| Gemini CLI logs | `~/.gemini/tmp/*/logs.json` |
 
 ---
 
@@ -141,15 +210,18 @@ This extension copies those files to `~/.gemini-accounts/<name>/` when saving, a
 
 ```
 AyakaGeminiAccountSwitcher/
-├── index.js                     # MCP server — core account switching logic
+├── index.js                     # MCP server — slash command logic
+├── watcher.js                   # Background watcher — auto quota detection
+├── start-watcher.bat            # Windows launcher (double-click)
+├── start-watcher.ps1            # PowerShell launcher
 ├── gemini-extension.json        # Extension manifest
-├── package.json                 # Node.js dependencies
+├── package.json
 ├── commands/
 │   └── accounts/
-│       ├── save.toml            # /accounts:save command
-│       ├── switch.toml          # /accounts:switch command
-│       ├── list.toml            # /accounts:list command
-│       └── delete.toml          # /accounts:delete command
+│       ├── save.toml            # /accounts:save
+│       ├── switch.toml          # /accounts:switch
+│       ├── list.toml            # /accounts:list
+│       └── delete.toml          # /accounts:delete
 └── README.md
 ```
 

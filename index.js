@@ -1,5 +1,7 @@
 /**
- * Gemini CLI Account Switcher - MCP Server
+ * AyakaGeminiAccountSwitcher — MCP Server
+ * By AyakaMods (https://github.com/AyakaMods)
+ *
  * Handles saving, switching, listing, and deleting Google accounts
  * for Gemini CLI by managing credential files in ~/.gemini/
  */
@@ -79,7 +81,7 @@ function copyCredentials(srcDir, destDir) {
 // ─── MCP Server ──────────────────────────────────────────────────────────────
 
 const server = new McpServer({
-  name: 'gemini-account-switcher',
+  name: 'AyakaGeminiAccountSwitcher',
   version: '1.0.0',
 });
 

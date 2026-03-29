@@ -1,9 +1,12 @@
 {
-  "name": "gemini-account-switcher",
+  "name": "ayaka-gemini-account-switcher",
   "version": "1.0.0",
-  "description": "Multi-account switcher extension for Gemini CLI",
+  "description": "AyakaGeminiAccountSwitcher — Multi-account switcher extension for Gemini CLI by AyakaMods",
   "type": "module",
   "main": "index.js",
+  "scripts": {
+    "watcher": "node watcher.js"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0"
   }
