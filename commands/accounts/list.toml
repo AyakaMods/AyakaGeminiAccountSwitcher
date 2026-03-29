@@ -1,0 +1,4 @@
+prompt = """
+List all saved Gemini CLI accounts using the list_accounts tool.
+Show the current active account, all saved account names with their emails, and the folder path where accounts are saved.
+"""

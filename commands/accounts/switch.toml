@@ -1,0 +1,5 @@
+prompt = """
+Switch to the saved Gemini CLI account using the switch_account tool.
+Account name: {{args}}
+After switching, tell the user which account is now active and remind them to restart Gemini CLI.
+"""

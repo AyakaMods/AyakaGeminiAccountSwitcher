@@ -1,0 +1,5 @@
+prompt = """
+Delete a saved Gemini CLI account using the delete_account tool.
+Account name: {{args}}
+Confirm deletion to the user including the email that was associated with it.
+"""

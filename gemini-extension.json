@@ -1,0 +1,11 @@
+{
+  "name": "gemini-account-switcher",
+  "version": "1.0.0",
+  "mcpServers": {
+    "accountSwitcher": {
+      "command": "node",
+      "args": ["${extensionPath}${/}index.js"],
+      "cwd": "${extensionPath}"
+    }
+  }
+}

@@ -1,0 +1,5 @@
+prompt = """
+Save the current Gemini CLI session as a named account using the save_account tool.
+Account name: {{args}}
+After saving, confirm the name, email, and full save path to the user.
+"""
